@@ -219,8 +219,6 @@ services:
         condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
-    volumes:
-      - ./output:/opt/airflow/output
 
   airflow-triggerer:
     <<: *airflow-common
