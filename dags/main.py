@@ -33,8 +33,8 @@ def teachers_schedule_hdfs():
         extra = json.loads(api_conn.extra or "{}")
         base_url = extra["base_url"]
 
-        start_date = execution_date.start_of("week").strftime("%Y-%m-%d")
-        end_date = execution_date.end_of("week").strftime("%Y-%m-%d")
+        start_date = execution_date.start_of("week").strftime("%Y.%m.%d")
+        end_date = execution_date.end_of("week").strftime("%Y.%m.%d")
 
         api_url = f"{base_url}/api/schedule/person/{teacher_id}?start={start_date}&finish={end_date}&lng=1"
 
