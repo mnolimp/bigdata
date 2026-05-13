@@ -7,9 +7,12 @@ from datetime import datetime
 from airflow.decorators import dag, task
 from airflow.providers.apache.hdfs.hooks.webhdfs import WebHDFSHook
 from airflow.hooks.base import BaseHook
+from airflow.sdk import Asset
+from airflow.operators.python import get_current_context
 
 TEACHER_IDS = [1003026, 782898, 1001117, 36240, 1001142]
 
+schedule_asset = Asset("hdfs://schedule/bronze")
 
 @dag(
     dag_id='analyse_multiply_schedule',
@@ -18,16 +21,16 @@ TEACHER_IDS = [1003026, 782898, 1001117, 36240, 1001142]
     catchup=False,
     tags=['schedule', 'airflow3']
 )
-
 def teachers_schedule_hdfs():
 
-    @task(task_id = 'get_teachers')
+    @task(task_id='get_teachers')
     def get_teachers() -> list[int]:
         return TEACHER_IDS
 
-    @task(task_id = 'process_teachers_schedule', trigger_rule="none_failed")
-    def process_teacher_schedule(teacher_id: int, **context) -> str:
-        execution_date = context["logical_date"]
+    @task(task_id='process_teachers_schedule', trigger_rule="none_failed")
+    def process_teacher_schedule(teacher_id: int) -> str:
+        ctx = get_current_context()
+        execution_date = ctx["data_interval_start"]
 
         api_conn = BaseHook.get_connection("omstu_schedule_api")
         extra = json.loads(api_conn.extra or "{}")
@@ -46,19 +49,19 @@ def teachers_schedule_hdfs():
 
             if not response.text or response.text.strip() == "":
                 print(f"Empty response for teacher_id={teacher_id}")
-                schedule_data = {"teacher_id": teacher_id, "lessons": []}
+                schedule_data = []
             else:
                 try:
                     schedule_data = response.json()
                 except json.JSONDecodeError:
                     print(f"Invalid JSON for teacher_id={teacher_id}")
-                    schedule_data = {"teacher_id": teacher_id, "lessons": []}
+                    schedule_data = []
 
             print(f"Got schedule for teacher_id={teacher_id}")
 
         except requests.exceptions.RequestException as e:
             print(f"API error for teacher_id={teacher_id}: {e}")
-            schedule_data = {"teacher_id": teacher_id, "lessons": []}
+            schedule_data = []
 
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
             json.dump(schedule_data, tmp_file, ensure_ascii=False, indent=2)
@@ -85,7 +88,24 @@ def teachers_schedule_hdfs():
         finally:
             os.unlink(tmp_file_path)
 
+    @task(task_id='publish_bronze_asset', outlets=[schedule_asset])
+    def publish_bronze_asset(hdfs_files: list, *, outlet_events):
+        ctx = get_current_context()
+        execution_date = ctx["data_interval_start"]
+
+        year  = execution_date.year
+        month = execution_date.month
+        day   = execution_date.day
+
+        outlet_events[schedule_asset].extra = {
+            "year": year,
+            "month": month,
+            "day": day,
+        }
+        print(f"Published bronze asset for {year}-{month:02d}-{day:02d}")
+
     teacher_ids = get_teachers()
-    process_teacher_schedule.expand(teacher_id=teacher_ids)
+    hdfs_files = process_teacher_schedule.expand(teacher_id=teacher_ids)
+    publish_bronze_asset(hdfs_files)
 
 teachers_schedule_hdfs()
