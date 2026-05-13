@@ -118,21 +118,21 @@ def silver_and_clickhouse():
 
         client.command("""
             CREATE TABLE IF NOT EXISTS rasp_omgtu.schedule (
-                lecturer_oid        Int64,
-                lecturer_name       String,
-                lecturer_rank       String,
-                discipline          String,
-                kind_of_work        String,
-                lesson_date         String,
-                day_of_week         String,
-                lesson_num          Int32,
-                time_start          String,
-                time_end            String,
-                auditorium          String,
-                building            String,
+                lecturer_oid Int64,
+                lecturer_name String,
+                lecturer_rank String,
+                discipline String,
+                kind_of_work String,
+                lesson_date String,
+                day_of_week String,
+                lesson_num Int32,
+                time_start String,
+                time_end String,
+                auditorium String,
+                building String,
                 auditorium_capacity Int32,
-                groups              String,
-                partition_date      Date
+                groups String,
+                partition_date Date
             )
             ENGINE = MergeTree()
             PARTITION BY partition_date
