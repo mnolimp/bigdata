@@ -11,7 +11,6 @@ from pyspark.sql.types import IntegerType, LongType
 
 schedule_asset = Asset("hdfs://schedule/bronze")
 
-
 @dag(
     dag_id='silver_and_clickhouse',
     schedule=[schedule_asset],
@@ -63,7 +62,7 @@ def silver_and_clickhouse():
                 .select(
                     col("lecturerOid").cast(LongType()).alias("lecturer_oid"),
                     col("lecturer_title").alias("lecturer_name"),
-                    col("lecturer_rank").alias("lecturer_rank"),
+                    col("lecturer_rank"),
                     col("discipline"),
                     col("kindOfWork").alias("kind_of_work"),
                     col("date").alias("lesson_date"),
