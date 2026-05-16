@@ -134,13 +134,13 @@ services:
     restart: always
     environment:
       CLICKHOUSE_USER: default
-      CLICKHOUSE_PASSWORD: airflow
+      CLICKHOUSE_PASSWORD: yoptich_clickhouse
       CLICKHOUSE_DB: rasp_omgtu
   postgres:
     image: postgres:16
     environment:
       POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
+      POSTGRES_PASSWORD: yoptich_postgres
       POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
@@ -340,7 +340,7 @@ services:
       _AIRFLOW_DB_MIGRATE: 'true'
       _AIRFLOW_WWW_USER_CREATE: 'true'
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-yoptich_airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
 
